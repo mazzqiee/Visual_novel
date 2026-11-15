@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RisingRoseViele</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#1d1230; --bg2:#0a0612; --bg3:#030207;
+    --rose:#ff8fa3; --gold:#ffe9a0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg3);overflow:hidden;
+    font-family:"Cormorant Garamond",Georgia,serif;color:#ffeef1;-webkit-tap-highlight-color:transparent}
+  body{background:radial-gradient(120% 90% at 50% 70%,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%)}
+
+  #sky,#scene,#frame{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+  #scene{overflow:visible}
+
+  .fog{position:fixed;left:0;right:0;bottom:0;height:20vh;pointer-events:none;
+    background:linear-gradient(to top,rgba(3,2,7,.8),rgba(3,2,7,0))}
+  .vignette{position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 55%,transparent 55%,rgba(0,0,0,.7) 100%)}
+
+  /* ============ animasi SVG ============ */
+  .draw{animation:draw var(--dur,2s) cubic-bezier(.4,.1,.3,1) var(--delay,0s) forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  .pop{transform-box:fill-box;transform:scale(0);
+    animation:pop .9s cubic-bezier(.2,1.4,.4,1) var(--delay,0s) forwards}
+  .pop.leaf{transform-origin:0% 50%}
+  .pop.thorn{transform-origin:50% 100%}
+  @keyframes pop{to{transform:scale(1)}}
+
+  .petal{transform-box:fill-box;transform-origin:50% 100%;transform:scale(0) rotate(-25deg);
+    animation:bloom 1.5s cubic-bezier(.2,1.25,.35,1) var(--delay,0s) forwards}
+  @keyframes bloom{to{transform:scale(1) rotate(0)}}
+
+  .grass{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);
+    animation:grow 2.4s cubic-bezier(.2,.9,.3,1) var(--delay,0s) forwards}
+  @keyframes grow{to{transform:scaleY(1)}}
+
+  .sway{transform-box:fill-box;transform-origin:50% 100%;
+    animation:sway var(--sd,5s) ease-in-out var(--sdel,0s) infinite alternate}
+  @keyframes sway{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}
+
+  .halo{opacity:0;animation:haloIn 2.4s ease-out var(--delay,0s) forwards,
+        pulse 3.4s ease-in-out calc(var(--delay,0s) + 2.4s) infinite}
+  @keyframes haloIn{to{opacity:1}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+  .node{opacity:0;animation:nodeIn .8s ease-out var(--delay,0s) forwards,
+        pulse 2.6s ease-in-out calc(var(--delay,0s) + .8s) infinite}
+  @keyframes nodeIn{to{opacity:1}}
+
+  .seed{animation:seed 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  @keyframes seed{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
+
+  /* ============ overlay teks ============ */
+  .caption{position:fixed;left:0;right:0;top:15vh;text-align:center;pointer-events:none;padding:0 48px}
+  .caption span{position:absolute;left:0;right:0;opacity:0;padding:0 48px;
+    font-style:italic;font-size:clamp(20px,4.6vmin,36px);letter-spacing:.04em;
+    text-shadow:0 0 18px rgba(255,110,140,.75)}
+  .play .caption span:nth-child(1){animation:cap 4.2s ease-in-out 1.2s forwards}
+  .play .caption span:nth-child(2){animation:cap 4.2s ease-in-out 4.8s forwards}
+  .play .caption span:nth-child(3){animation:cap 4.6s ease-in-out 8.4s forwards}
+  @keyframes cap{0%{opacity:0;transform:translateY(8px);filter:blur(6px)}
+    20%,75%{opacity:1;transform:none;filter:none}100%{opacity:0;transform:translateY(-6px);filter:blur(4px)}}
+
+  .title{position:fixed;left:0;right:0;top:max(7vh,56px);text-align:center;pointer-events:none;padding:0 40px}
+  .title h1{font-family:"Cinzel Decorative",Georgia,serif;font-weight:900;
+    font-size:clamp(38px,11vmin,104px);letter-spacing:.08em;line-height:1;
+    display:flex;justify-content:center;gap:.04em;flex-wrap:wrap}
+  .title h1 b{display:inline-block;opacity:0;font-weight:900;
+    background:linear-gradient(#ffffff,#ffc2cc 55%,#e0334f);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 14px rgba(255,80,110,.75)) drop-shadow(0 0 40px rgba(200,30,70,.6))}
+  .title h1 .sp{width:.35em}
+  .play .title h1 b{animation:letter 1.4s cubic-bezier(.2,.9,.3,1) calc(13.2s + var(--i)*.12s) forwards}
+  @keyframes letter{0%{opacity:0;transform:translateY(22px) scale(.8);filter:blur(10px)}100%{opacity:1;transform:none}}
+  .title h2{margin-top:1.2vh;font-family:"Cinzel Decorative",Georgia,serif;font-weight:700;
+    font-size:clamp(12px,2.7vmin,22px);letter-spacing:.7em;padding-left:.7em;color:var(--gold);opacity:0;
+    text-shadow:0 0 14px rgba(255,233,160,.7)}
+  .play .title h2{animation:fade 2s ease-out 15s forwards}
+  .title p{margin-top:1.6vh;font-style:italic;font-size:clamp(15px,2.8vmin,24px);opacity:0;color:#ffd9df;
+    text-shadow:0 0 12px rgba(255,110,140,.55)}
+  .play .title p{animation:fade 2.4s ease-out 16s forwards}
+  @keyframes fade{to{opacity:1}}
+
+  .cta{position:fixed;left:0;right:0;bottom:calc(max(7.5vh,64px) + env(safe-area-inset-bottom));display:flex;justify-content:center;opacity:0;pointer-events:none}
+  .play .cta{animation:fade 1.6s ease-out 17.5s forwards;pointer-events:auto}
+  button{font:inherit;cursor:pointer;color:#fff0f3;background:rgba(48,8,22,.6);
+    border:1px solid rgba(255,110,140,.65);border-radius:999px;backdrop-filter:blur(6px);
+    box-shadow:0 0 22px rgba(255,80,110,.35),inset 0 0 14px rgba(255,110,140,.15);transition:.25s}
+  button:hover{box-shadow:0 0 34px rgba(255,80,110,.75),inset 0 0 18px rgba(255,110,140,.3);transform:translateY(-2px)}
+  .start{font-family:"Cinzel Decorative",Georgia,serif;font-weight:700;letter-spacing:.3em;
+    padding:16px 38px 16px 44px;font-size:clamp(14px,2.6vmin,20px);animation:breathe 3s ease-in-out infinite}
+  @keyframes breathe{0%,100%{box-shadow:0 0 18px rgba(255,80,110,.3)}50%{box-shadow:0 0 38px rgba(255,80,110,.85)}}
+
+  .tools{position:fixed;top:max(72px,calc(env(safe-area-inset-top) + 62px));right:44px;display:flex;gap:8px;z-index:5;opacity:.85}
+  .tools button{font-size:13px;padding:7px 12px}
+
+  .end{position:fixed;inset:0;display:grid;place-items:center;background:#030207;opacity:0;pointer-events:none;transition:opacity 1.6s;z-index:10;
+    font-style:italic;font-size:clamp(18px,4vmin,30px);text-shadow:0 0 16px rgba(255,110,140,.75)}
+  .end.on{opacity:1;pointer-events:auto}
+
+  @media (prefers-reduced-motion:reduce){.sway,.halo,.node,.start{animation-duration:12s}}
+</style>
+</head>
+<body class="play">
+
+<canvas id="sky"></canvas>
+
+<svg id="scene" viewBox="0 0 600 900" preserveAspectRatio="xMidYMax meet" aria-label="Intro Tales Kuu">
+  <defs>
+    <linearGradient id="gLeaf" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#0f5f38"/><stop offset="1" stop-color="#7df0a5"/>
+    </linearGradient>
+    <linearGradient id="gLeaf2" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#0a3f27"/><stop offset="1" stop-color="#2fae6a"/>
+    </linearGradient>
+    <linearGradient id="gGrass" x1="0" x2="0" y1="1" y2="0">
+      <stop offset="0" stop-color="#0f4a18"/><stop offset=".6" stop-color="#37a82a"/><stop offset="1" stop-color="#a5f068"/>
+    </linearGradient>
+    <linearGradient id="gRose1" x1="0" x2="0" y1="1" y2="0">
+      <stop offset="0" stop-color="#4d0818"/><stop offset=".5" stop-color="#a5122f"/><stop offset="1" stop-color="#e8334f"/>
+    </linearGradient>
+    <linearGradient id="gRose2" x1="0" x2="0" y1="1" y2="0">
+      <stop offset="0" stop-color="#5e0a1f"/><stop offset=".5" stop-color="#c21e3c"/><stop offset="1" stop-color="#ff5a74"/>
+    </linearGradient>
+    <linearGradient id="gRose3" x1="0" x2="0" y1="1" y2="0">
+      <stop offset="0" stop-color="#6a0c24"/><stop offset=".5" stop-color="#d82a4a"/><stop offset="1" stop-color="#ff7e92"/>
+    </linearGradient>
+    <linearGradient id="gRose4" x1="0" x2="0" y1="1" y2="0">
+      <stop offset="0" stop-color="#34050f"/><stop offset=".6" stop-color="#a01230"/><stop offset="1" stop-color="#e0405c"/>
+    </linearGradient>
+    <radialGradient id="gHalo">
+      <stop offset="0" stop-color="#ff6a85" stop-opacity=".5"/>
+      <stop offset=".5" stop-color="#e0203f" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#e0203f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gGround" cx=".5" cy=".3" r=".7">
+      <stop offset="0" stop-color="#1c0d16"/><stop offset="1" stop-color="#030207" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowRose" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowBig" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <ellipse cx="300" cy="860" rx="420" ry="120" fill="url(#gGround)"/>
+  <g id="gBackGrass"></g>
+  <g id="gRoots" filter="url(#glow)"></g>
+  <g id="gStems"></g>
+  <g id="gFerns"></g>
+  <g id="gFlowers" filter="url(#glowRose)"></g>
+  <g id="gFront"></g>
+  <circle class="seed" cx="300" cy="806" r="7" fill="#ffd1d8" filter="url(#glowBig)"/>
+</svg>
+
+<!-- bingkai akar belukar: dibangun sesuai ukuran layar -->
+<svg id="frame" viewBox="0 0 600 900" preserveAspectRatio="none" aria-hidden="true">
+  <g id="gFrameVines"></g>
+  <g id="gFrameRoses" filter="url(#glowRose)"></g>
+</svg>
+
+<div class="fog"></div>
+<div class="vignette"></div>
+
+<div class="caption">
+  <span>Di balik belukar yang sunyi…</span>
+  <span>akar-akar berduri saling mengikat, membentuk bingkai…</span>
+  <span>dan mawar merah pun mekar dalam gelap.</span>
+</div>
+
+<div class="title">
+  <h1 id="ttl"></h1>
+  <h2>RisingRoseViele</h2>
+  <p>Dibalik keindahannya...</p>
+  <p>Ada banyak duri yang menjebak.</p>
+</div>
+
+<div class="cta"><button class="start" id="btnStart">MULAI</button></div>
+
+<div class="tools">
+  <button id="btnSound" title="Suara">🔇 Suara</button>
+  <button id="btnReplay" title="Putar ulang">↻ Ulang</button>
+</div>
+
+<div class="end" id="end">Memasuki dunia…</div>
+
+<script>
+/* ===================================================================
+   TALES KUU — Intro "Mawar Belukar"
+   Mawar merah berduri yang bercahaya di malam hari, dibingkai oleh
+   akar belukar berduri yang tumbuh dari dasar layar sampai bertemu
+   di tengah atas. Pasang logika game di window.TalesKuuIntro.onStart
+   =================================================================== */
+window.TalesKuuIntro = { onStart: function(){ /* TODO: lanjut ke menu / game */ } };
+
+const NS = 'http://www.w3.org/2000/svg';
+const $  = id => document.getElementById(id);
+function el(tag, attrs, parent){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let rnd = mulberry32(7);
+const rr = (a,b)=>a+rnd()*(b-a);
+
+/* ---------- judul ---------- */
+(function(){
+  const h=$('ttl'); let i=0;
+  for (const ch of 'R.R.V'){
+    const b=document.createElement('b');
+    if(ch===' '){b.className='sp';b.innerHTML='&nbsp;'}else b.textContent=ch;
+    b.style.setProperty('--i',i++); h.appendChild(b);
+  }
+})();
+
+/* ---------- util path ---------- */
+function smooth(pts){
+  let d=`M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for(let i=1;i<pts.length-1;i++){
+    const mx=(pts[i][0]+pts[i+1][0])/2, my=(pts[i][1]+pts[i+1][1])/2;
+    d+=` Q${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)} ${mx.toFixed(1)},${my.toFixed(1)}`;
+  }
+  const l=pts[pts.length-1]; d+=` L${l[0].toFixed(1)},${l[1].toFixed(1)}`;
+  return d;
+}
+function drawPath(parent, d, o){
+  const p = el('path',{d, fill:'none', stroke:o.stroke, 'stroke-width':o.width,
+    'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:o.opacity ?? 1}, parent);
+  const len = p.getTotalLength();
+  p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+  p.style.setProperty('--dur', o.dur+'s'); p.style.setProperty('--delay', o.delay+'s');
+  p.classList.add('draw');
+  p._len = len; return p;
+}
+function pointAt(path, s){
+  const L = path._len, a = path.getPointAtLength(Math.max(0,Math.min(L,s)));
+  const b = path.getPointAtLength(Math.max(0,Math.min(L,s+1.5)));
+  return {x:a.x, y:a.y, ang:Math.atan2(b.y-a.y, b.x-a.x)*180/Math.PI};
+}
+
+/* ---------- bentuk daun / duri / kelopak ---------- */
+const LEAF  = 'M0,0 C8,-13 30,-15 46,0 C30,15 8,13 0,0Z';
+const LEAFR = 'M0,0 C6,-17 28,-19 40,0 C28,19 6,17 0,0Z';
+const THORN = 'M-3.4,0 L0,-13 L3.4,0Z';
+const RP    = 'M0,0 C-30,-2 -38,-34 -10,-45 Q0,-49 10,-45 C38,-34 30,-2 0,0Z';
+
+function leaf(parent, x, y, ang, size, delay, fill, round){
+  const g = el('g',{transform:`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(${size.toFixed(2)})`}, parent);
+  const p = el('path',{d: round?LEAFR:LEAF, fill}, g);
+  p.classList.add('pop','leaf'); p.style.setProperty('--delay', delay.toFixed(2)+'s');
+}
+function thorn(parent, x, y, ang, size, delay, fill){
+  const g = el('g',{transform:`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(${size.toFixed(2)})`}, parent);
+  const t = el('path',{d:THORN, fill}, g);
+  t.classList.add('pop','thorn'); t.style.setProperty('--delay', delay.toFixed(2)+'s');
+}
+/* duri di sepanjang path */
+function thornsAlong(layer, p, delay, dur, spacing, fill, size, leafFill){
+  const L=p._len;
+  for(let s=spacing, k=0; s<L-6; s+=spacing, k++){
+    const pt=pointAt(p,s), side=(k%2?1:-1), dl=delay+(s/L)*dur+.15;
+    thorn(layer, pt.x, pt.y, pt.ang+90+side*62, size*rr(.8,1.25), dl, fill);
+    if(leafFill && k%4===0) leaf(layer, pt.x, pt.y, pt.ang-side*50, rr(.55,.85), dl+.1, leafFill, true);
+  }
+}
+
+/* cabang dengan daun berpasangan */
+function branch(layer, d, o){
+  const p = drawPath(layer, d, {stroke:o.stroke, width:o.width, dur:o.dur, delay:o.delay, opacity:o.op});
+  const n = o.leaves;
+  for(let i=0;i<n;i++){
+    const t = o.t0 + (1-o.t0)*(i/(n-1||1));
+    const pt = pointAt(p, t*p._len);
+    const sz = o.size*(1 - t*0.5)*rr(.85,1.15);
+    const dl = o.delay + t*o.dur + .05, sp=o.spread ?? 55;
+    leaf(layer, pt.x, pt.y, pt.ang-sp, sz, dl, o.fill, o.round);
+    leaf(layer, pt.x, pt.y, pt.ang+sp, sz*rr(.85,1.05), dl+.08, o.fill2||o.fill, o.round);
+  }
+  const e = pointAt(p, p._len-1);
+  leaf(layer, e.x, e.y, e.ang, o.size*.5, o.delay+o.dur+.1, o.fill, o.round);
+  return p;
+}
+
+/* ---------- AKAR (di dasar adegan) ---------- */
+function root(layer, x, y, ang, len, w, depth, delay){
+  const segs=4, pts=[[x,y]]; let cx=x, cy=y, a=ang;
+  for(let i=0;i<segs;i++){
+    a += (rnd()-.5)*1.0;
+    cx += Math.cos(a)*len/segs; cy += Math.sin(a)*len/segs;
+    if(cy<782) cy = 782 + (782-cy)*.3;
+    pts.push([cx,cy]);
+  }
+  const d = smooth(pts), dur = 1.1 + len/150;
+  drawPath(layer, d, {stroke:'#08030a', width:w+3, dur, delay});
+  drawPath(layer, d, {stroke:'#d9506b', width:Math.max(.9,w*.4), dur, delay:delay+.05, opacity:.85});
+  if(depth>0){
+    const kids = depth>1 ? 2 : 1+(rnd()>.4);
+    for(let k=0;k<kids;k++){
+      const j = 2 + (k%2);
+      root(layer, pts[j][0], pts[j][1], a + (k%2?1:-1)*rr(.5,1.1), len*rr(.55,.7), w*.62, depth-1, delay + dur*(j/segs));
+    }
+  } else {
+    const n = el('circle',{cx:cx,cy:cy,r:rr(2,3.4),fill:'#ffd1d8'},layer);
+    n.classList.add('node'); n.style.setProperty('--delay',(delay+dur).toFixed(2)+'s');
+  }
+}
+function buildRoots(layer){
+  const base=[[0.05,150,9],[0.4,170,8],[0.95,130,8],[2.2,140,8],[2.75,170,8],[3.1,150,9],[1.5,70,6],[0.75,110,6],[2.4,110,6]];
+  base.forEach(([a,l,w],i)=> root(layer,300+rr(-8,8),806,a,l,w,3,1.2+i*.12));
+}
+
+/* ---------- MAWAR ---------- */
+function rose(parent, x, y, size, rot, delay, tilt){
+  const g = el('g',{transform:`translate(${x},${y}) rotate(${rot}) scale(${size})`}, parent);
+  const sw = el('g',{}, g); sw.classList.add('sway');
+  sw.style.setProperty('--sd', rr(4,6).toFixed(1)+'s'); sw.style.setProperty('--sdel', (delay+3)+'s');
+  const halo = el('circle',{cx:0,cy:-18,r:82,fill:'url(#gHalo)'}, sw);
+  halo.classList.add('halo'); halo.style.setProperty('--delay',(delay+.5)+'s');
+  const tg = el('g',{transform:`scale(1,${tilt||.9})`}, sw);
+  const layers=[
+    {n:5,k:1.0, off:0, fill:'url(#gRose1)'},
+    {n:5,k:.76, off:36, fill:'url(#gRose2)'},
+    {n:4,k:.52, off:18, fill:'url(#gRose3)'},
+    {n:3,k:.30, off:50, fill:'url(#gRose4)'},
+  ];
+  layers.forEach((L,li)=>{
+    for(let i=0;i<L.n;i++){
+      const pg = el('g',{transform:`rotate(${L.off + i*360/L.n})`}, tg);
+      const ps = el('g',{transform:`scale(${L.k})`}, pg);
+      const p = el('path',{d:RP, fill:L.fill, stroke:'#3a0510','stroke-width':1}, ps);
+      p.classList.add('petal');
+      p.style.setProperty('--delay',(delay + (3-li)*.35 + i*.08).toFixed(2)+'s');
+    }
+  });
+  const sp = el('path',{d:'M0,-3 c7,-9 16,0 7,7 c-9,7 -18,-7 -5,-13', fill:'none', stroke:'#3a0410','stroke-width':1.5,'stroke-linecap':'round'}, tg);
+  sp.classList.add('node'); sp.style.setProperty('--delay',(delay+1.4)+'s');
+}
+
+/* ---------- RUMPUT ---------- */
+function blade(layer, x, h, dx, delay, w){
+  const y=806;
+  const d = `M${x},${y} C${x+dx*.25},${y-h*.5} ${x+dx*.7},${y-h*.82} ${x+dx},${y-h} `+
+            `C${x+dx*.78+w*.4},${y-h*.72} ${x+dx*.35+w*.9},${y-h*.4} ${x+w},${y}Z`;
+  const g = el('g',{}, layer); g.classList.add('sway');
+  g.style.setProperty('--sd', rr(3.5,6).toFixed(1)+'s'); g.style.setProperty('--sdel', (delay+2.4)+'s');
+  const p = el('path',{d, fill:'url(#gGrass)'}, g);
+  p.classList.add('grass'); p.style.setProperty('--delay', delay.toFixed(2)+'s');
+}
+function buildGrass(back, front){
+  for(let i=0;i<18;i++){
+    const left = i<9, x = left ? rr(12,210) : rr(395,590);
+    blade(back, x, rr(100,260), rr(-30,60)*(rnd()>.5?1:-1)*.6, 8.2+rnd()*2.5, rr(6,12));
+  }
+  for(let i=0;i<16;i++){
+    const left = i<8, x = left ? rr(40,270) : rr(330,570);
+    blade(front, x, rr(40,120), rr(-34,34), 9+rnd()*2.5, rr(5,9));
+  }
+}
+
+/* ---------- BATANG MAWAR BERDURI ---------- */
+const STEMS = [
+  {d:'M300,806 C299,690 303,520 300,340', fx:300, fy:340, size:1.5,  rot:0,   delay:4.6},
+  {d:'M292,806 C268,690 232,570 205,448', fx:205, fy:448, size:1.28, rot:-14, delay:5.2},
+  {d:'M308,806 C335,680 372,570 392,408', fx:392, fy:408, size:1.28, rot:13,  delay:5.6},
+];
+const FERNS = [
+  'M292,800 C240,775 180,775 108,742', 'M290,802 C250,792 170,805 92,790',
+  'M308,800 C360,780 420,780 492,748', 'M310,802 C350,795 430,808 506,790',
+  'M296,800 C280,760 250,720 214,684', 'M304,800 C324,756 352,716 388,682',
+];
+
+/* ===================================================================
+   BINGKAI AKAR BELUKAR — tumbuh dari dasar tengah, menyusuri bawah,
+   naik di sisi kiri/kanan, dan bertemu di tengah atas layar.
+   =================================================================== */
+function frameMargin(){ return Math.max(26, Math.min(innerWidth, innerHeight)*.05); }
+function frameVine(layer, mirror, phase, amp, base, w, delay, dur, frac){
+  const W=innerWidth, H=innerHeight, m=frameMargin();
+  const a=W/2-m, b=H-2*m, P=2*a+b, end=P*frac, pts=[];
+  for(let s=0; s<=end; s+=26){
+    let x,y,nx,ny;
+    if(s<a){ x=W/2+s; y=H-m; nx=0; ny=-1; }
+    else if(s<a+b){ x=W-m; y=H-m-(s-a); nx=-1; ny=0; }
+    else { x=W-m-(s-a-b); y=m; nx=0; ny=1; }
+    const o = base + amp*Math.sin(s*0.045+phase);
+    x+=nx*o; y+=ny*o;
+    pts.push([mirror? W-x : x, y]);
+  }
+  const d = smooth(pts);
+  drawPath(layer, d, {stroke:'#08030a', width:w+4, dur, delay});
+  const p = drawPath(layer, d, {stroke:'#b72f4b', width:Math.max(1.4,w*.36), dur, delay:delay+.05, opacity:.85});
+  thornsAlong(layer, p, delay, dur, 24, '#ffc2cc', 1.0, 'url(#gLeaf2)');
+  return p;
+}
+function buildFrame(){
+  const W=innerWidth, H=innerHeight, m=frameMargin();
+  const FR=$('frame'); FR.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const gv=$('gFrameVines'), gr=$('gFrameRoses'); gv.innerHTML=''; gr.innerHTML='';
+  const rs = mulberry32(11); const save=rnd; rnd=rs;
+
+  [false,true].forEach((mir,i)=>{
+    const dl = 2.4 + i*.25;
+    frameVine(gv, mir, 0,        12, 16, 8,   dl,      8.5, 1);
+    frameVine(gv, mir, Math.PI,  12, 16, 6.5, dl+.3,   8.5, 1);
+    frameVine(gv, mir, 1.6,      7,  34, 3.6, dl+1.2,  6.5, .72);
+  });
+
+  // mawar kecil di sudut & sisi bingkai
+  const sc = Math.max(.45, Math.min(.85, Math.min(W,H)/900));
+  const spots = [
+    [m+34, H-m-34, sc*.95, -20], [W-m-34, H-m-34, sc*.95, 20],
+    [m+18, H*.36,  sc*.7,  -35], [W-m-18, H*.36,  sc*.7,  35],
+    [m+22, H*.16,  sc*.5,  -10], [W-m-22, H*.16,  sc*.5,  10],
+  ];
+  spots.forEach(([x,y,s,r],i)=> rose(gr, x, y, s, r, 10.6+i*.35, .95));
+  rnd=save;
+}
+
+/* ---------- BANGUN ULANG SELURUH ADEGAN ---------- */
+function buildScene(){
+  rnd = mulberry32(7);
+  ['gBackGrass','gRoots','gStems','gFerns','gFlowers','gFront'].forEach(id=>{ $(id).innerHTML=''; });
+
+  buildRoots($('gRoots'));
+
+  STEMS.forEach((s,i)=>{
+    const p = branch($('gStems'), s.d, {stroke:'#2f9e5c', width:5.5-i*.6, dur:4.2, delay:s.delay,
+      leaves:7, t0:.25, size:1.0, fill:'url(#gLeaf)', fill2:'url(#gLeaf2)', spread:52, round:false});
+    thornsAlong($('gStems'), p, s.delay, 4.2, 22, '#ff6a85', 1.0);
+  });
+  FERNS.forEach((d,i)=>{
+    branch($('gFerns'), d, {stroke:'#2a8a52', width:3, dur:3.4, delay:6.0+i*.3,
+      leaves:7, t0:.15, size:(i<4?1.0:.9), fill:i%2?'url(#gLeaf2)':'url(#gLeaf)', fill2:'url(#gLeaf2)', spread:(i<4?70:58), round:i<4});
+  });
+  buildGrass($('gBackGrass'), $('gFront'));
+
+  // mawar mekar setelah batang selesai
+  STEMS.forEach(s=> rose($('gFlowers'), s.fx, s.fy, s.size, s.rot, s.delay+4.0, .9));
+
+  buildFrame();
+}
+
+/* ===================================================================
+   LANGIT: bintang, kunang-kunang, kelopak mawar berguguran (canvas)
+   =================================================================== */
+const cv=$('sky'), cx=cv.getContext('2d');
+let W=0,H=0,DPR=1,t0=performance.now();
+const stars=[], flies=[], petals=[];
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=cv.width=innerWidth*DPR; H=cv.height=innerHeight*DPR;
+}
+resize();
+for(let i=0;i<150;i++) stars.push({x:Math.random(),y:Math.random()*.8,r:Math.random()*1.3+.3,
+  f:Math.random()*2+.6,ph:Math.random()*6.28,c:Math.random()<.2?'#ffe9a0':(Math.random()<.35?'#ff8fa3':'#ffffff')});
+function newFly(init){
+  return {x:.2+Math.random()*.6, y:init?Math.random():1.05, vx:(Math.random()-.5)*.02, vy:-(.012+Math.random()*.03),
+    r:Math.random()*2+1, ph:Math.random()*6.28, f:Math.random()*2+1, c:Math.random()<.55?'#ffe9a0':'#ff8fa3'};
+}
+for(let i=0;i<50;i++) flies.push(newFly(true));
+function newPetal(){
+  return {x:.1+Math.random()*.8, y:-.05-Math.random()*.5, vy:.025+Math.random()*.035, ph:Math.random()*6.28,
+    s:Math.random()*4+4, rot:Math.random()*6.28, vr:(Math.random()-.5)*1.6, c:Math.random()<.5?'#d92a48':'#a5122f'};
+}
+for(let i=0;i<22;i++) petals.push(newPetal());
+
+let last=performance.now();
+function frame(now){
+  const t=(now-t0)/1000, dt=Math.min(.05,(now-last)/1000); last=now;
+  cx.clearRect(0,0,W,H);
+  const starA = Math.min(1,t/3);
+  for(const s of stars){
+    cx.globalAlpha = starA*(.35+.65*Math.abs(Math.sin(t*s.f+s.ph)));
+    cx.fillStyle=s.c; cx.beginPath(); cx.arc(s.x*W,s.y*H,s.r*DPR,0,6.283); cx.fill();
+  }
+  const inten = .15 + .85*Math.max(0,Math.min(1,(t-8)/6));
+  for(const f of flies){
+    f.x += (f.vx+Math.sin(t*f.f+f.ph)*.01)*dt*2.2; f.y += f.vy*dt*(.6+inten);
+    if(f.y<-.05) Object.assign(f,newFly(false));
+    const a = inten*(.3+.7*Math.abs(Math.sin(t*f.f*.8+f.ph)));
+    const x=f.x*W,y=f.y*H,r=f.r*DPR;
+    const g=cx.createRadialGradient(x,y,0,x,y,r*5);
+    g.addColorStop(0,f.c); g.addColorStop(1,'rgba(0,0,0,0)');
+    cx.globalAlpha=a*.55; cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r*5,0,6.283); cx.fill();
+    cx.globalAlpha=a; cx.fillStyle=f.c; cx.beginPath(); cx.arc(x,y,r*.7,0,6.283); cx.fill();
+  }
+  if(t>13){
+    for(const p of petals){
+      p.y += p.vy*dt; p.x += Math.sin(t*.8+p.ph)*.012*dt*3; p.rot += p.vr*dt;
+      if(p.y>1.05) Object.assign(p,newPetal());
+      if(p.y<0) continue;
+      cx.save(); cx.translate(p.x*W,p.y*H); cx.rotate(p.rot);
+      cx.scale(1, .55+.45*Math.abs(Math.sin(t*1.3+p.ph)));
+      cx.globalAlpha=.85; cx.fillStyle=p.c;
+      cx.beginPath(); cx.ellipse(0,0,p.s*DPR*.6,p.s*DPR,0,0,6.283); cx.fill();
+      cx.restore();
+    }
+  }
+  cx.globalAlpha=1;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ===================================================================
+   SUARA AMBIEN (opsional, aktif setelah klik)
+   =================================================================== */
+let ac=null, master=null, chimeTimer=null, soundOn=false;
+function startSound(){
+  if(!ac){
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    master=ac.createGain(); master.gain.value=0; master.connect(ac.destination);
+    [55,82.4,110,164.8].forEach((f,i)=>{
+      const o=ac.createOscillator(), g=ac.createGain(), l=ac.createOscillator(), lg=ac.createGain();
+      o.type='sine'; o.frequency.value=f; g.gain.value=.12/(i+1);
+      l.frequency.value=.05+i*.03; lg.gain.value=g.gain.value*.6;
+      l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(master); o.start(); l.start();
+    });
+  }
+  ac.resume(); master.gain.cancelScheduledValues(ac.currentTime);
+  master.gain.linearRampToValueAtTime(.8, ac.currentTime+3);
+  clearInterval(chimeTimer);
+  const scale=[392,440,466.16,587.33,659.25,783.99]; // nuansa minor, lebih gelap
+  chimeTimer=setInterval(()=>{
+    if(!soundOn) return;
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type='sine'; o.frequency.value=scale[Math.floor(Math.random()*scale.length)];
+    g.gain.setValueAtTime(0,ac.currentTime);
+    g.gain.linearRampToValueAtTime(.07,ac.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+3.2);
+    o.connect(g); g.connect(master); o.start(); o.stop(ac.currentTime+3.3);
+  }, 1400);
+}
+function stopSound(){ if(master){ master.gain.linearRampToValueAtTime(0, ac.currentTime+1);} clearInterval(chimeTimer); }
+$('btnSound').onclick=()=>{
+  soundOn=!soundOn;
+  $('btnSound').textContent = soundOn ? '🔊 Suara' : '🔇 Suara';
+  soundOn ? startSound() : stopSound();
+};
+
+/* ===================================================================
+   KONTROL
+   =================================================================== */
+function play(){
+  document.body.classList.remove('play');
+  $('end').classList.remove('on');
+  buildScene();
+  void document.body.offsetWidth;
+  document.body.classList.add('play');
+  t0=performance.now();
+}
+$('btnReplay').onclick=play;
+$('btnStart').onclick=()=>{
+  $('end').classList.add('on');
+  try{ window.TalesKuuIntro.onStart(); }catch(e){}
+  setTimeout(()=>$('end').classList.remove('on'), 3200);
+};
+
+/* bingkai mengikuti ukuran layar: ulang adegan bila ukuran berubah nyata */
+let lw=innerWidth, lh=innerHeight, rt=null;
+addEventListener('resize',()=>{
+  resize();
+  clearTimeout(rt);
+  rt=setTimeout(()=>{
+    if(Math.abs(innerWidth-lw)>40 || Math.abs(innerHeight-lh)>120){ lw=innerWidth; lh=innerHeight; play(); }
+  },300);
+});
+
+buildScene();
+</script>
+</body>
+</html>
